@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Livro-Razão · Produção Acumulada</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Source+Sans+3:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#122032;
+    --ink-soft:#2c3e52;
+    --paper:#F3EFE4;
+    --paper-2:#EAE3D2;
+    --line:#c9bfa4;
+    --gold:#B3862C;
+    --gold-soft:#d9b876;
+    --green:#3f6350;
+    --red:#9c3d34;
+    --card-bg:#FBF8F1;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--paper);
+    background-image:
+      repeating-linear-gradient(0deg, rgba(18,32,50,0.035) 0px, rgba(18,32,50,0.035) 1px, transparent 1px, transparent 34px);
+    color:var(--ink);
+    font-family:'Source Sans 3', sans-serif;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:1280px;margin:0 auto;padding:36px 28px 80px;}
+
+  /* HEADER */
+  header{
+    display:flex;justify-content:space-between;align-items:flex-end;
+    border-bottom:3px double var(--ink);
+    padding-bottom:18px;margin-bottom:8px;flex-wrap:wrap;gap:16px;
+  }
+  .brand-eyebrow{
+    font-family:'IBM Plex Mono', monospace;
+    letter-spacing:.14em;text-transform:uppercase;
+    font-size:11px;color:var(--gold);font-weight:600;margin-bottom:6px;
+  }
+  h1{
+    font-family:'Fraunces', serif;
+    font-weight:600;
+    font-size:clamp(28px,4vw,44px);
+    margin:0;
+    letter-spacing:-0.01em;
+  }
+  .period-box{
+    text-align:right;font-family:'IBM Plex Mono', monospace;font-size:12.5px;color:var(--ink-soft);
+    border-left:2px solid var(--line);padding-left:16px;
+  }
+  .period-box .val{font-size:16px;color:var(--ink);font-weight:600;}
+
+  .subline{
+    font-size:13.5px;color:var(--ink-soft);margin:10px 0 34px;
+    font-style:italic;font-family:'Fraunces',serif;
+  }
+
+  /* KPI LEDGER STRIP */
+  .ledger{
+    display:grid;
+    grid-template-columns:repeat(5,1fr);
+    border:1px solid var(--ink);
+    background:var(--card-bg);
+    margin-bottom:40px;
+  }
+  .ledger .cell{
+    padding:18px 20px;
+    border-right:1px solid var(--line);
+    position:relative;
+  }
+  .ledger .cell:last-child{border-right:none;}
+  .ledger .cell::before{
+    content:attr(data-idx);
+    position:absolute;top:10px;right:14px;
+    font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--line);
+  }
+  .cell .label{
+    font-family:'IBM Plex Mono', monospace;font-size:10.5px;text-transform:uppercase;
+    letter-spacing:.08em;color:var(--ink-soft);margin-bottom:10px;
+  }
+  .cell .value{
+    font-family:'Fraunces', serif;font-weight:600;
+    font-size:26px;line-height:1.05;color:var(--ink);
+  }
+  .cell .value.gold{color:var(--gold);}
+  .cell .value.red{color:var(--red);}
+  .cell .sub{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--ink-soft);margin-top:6px;}
+
+  /* SECTION HEADERS */
+  .section-title{
+    display:flex;align-items:baseline;gap:12px;
+    margin:48px 0 18px;
+  }
+  .section-title .num{
+    font-family:'IBM Plex Mono',monospace;color:var(--gold);font-size:13px;font-weight:600;
+  }
+  .section-title h2{
+    font-family:'Fraunces',serif;font-weight:600;font-size:21px;margin:0;
+  }
+  .section-title .rule{flex:1;height:1px;background:var(--line);}
+
+  /* GRID LAYOUTS */
+  .grid-2{display:grid;grid-template-columns:1.4fr 1fr;gap:24px;}
+  .grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:24px;}
+  @media(max-width:900px){.grid-2,.grid-3{grid-template-columns:1fr;}}
+
+  .panel{
+    background:var(--card-bg);
+    border:1px solid var(--ink);
+    padding:20px 22px 14px;
+  }
+  .panel h3{
+    font-family:'IBM Plex Mono',monospace;font-size:11.5px;text-transform:uppercase;
+    letter-spacing:.07em;color:var(--ink-soft);margin:0 0 14px;
+    display:flex;justify-content:space-between;
+  }
+  .panel h3 span.tag{color:var(--gold);}
+  .chart-box{position:relative;width:100%;}
+
+  /* TABLE */
+  table{width:100%;border-collapse:collapse;font-size:13px;}
+  thead th{
+    text-align:left;font-family:'IBM Plex Mono',monospace;font-size:10.5px;
+    text-transform:uppercase;letter-spacing:.06em;color:var(--ink-soft);
+    border-bottom:1.5px solid var(--ink);padding:6px 8px;
+  }
+  tbody td{padding:7px 8px;border-bottom:1px dashed var(--line);}
+  tbody tr:hover{background:var(--paper-2);}
+  td.num, th.num{text-align:right;font-family:'IBM Plex Mono',monospace;}
+  .bar-cell{position:relative;}
+  .bar-track{height:6px;background:var(--paper-2);width:100%;border-radius:1px;overflow:hidden;}
+  .bar-fill{height:100%;background:var(--gold);}
+
+  footer{
+    margin-top:60px;padding-top:18px;border-top:1px solid var(--line);
+    font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:var(--ink-soft);
+    display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;
+  }
+
+  ::selection{background:var(--gold-soft);}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div>
+      <div class="brand-eyebrow">Livro de Produção &nbsp;·&nbsp; Correspondentes Bancários</div>
+      <h1>Produção Acumulada</h1>
+    </div>
+    <div class="period-box">
+      Período apurado<br>
+      <span class="val" id="periodo">—</span>
+    </div>
+  </header>
+  <p class="subline">Panorama consolidado de liberações, por praça, coordenação e tipo de operação — base carregada de TBL_PRODUCAO_ACUMULADA.csv</p>
+
+  <!-- KPI LEDGER -->
+  <div class="ledger" id="ledger"></div>
+
+  <!-- SECTION 1: EVOLUÇÃO -->
+  <div class="section-title"><span class="num">01</span><h2>Evolução diária de liberações</h2><div class="rule"></div></div>
+  <div class="panel">
+    <h3>Valor liberado por dia <span class="tag" id="serieRange"></span></h3>
+    <div class="chart-box" style="height:300px;">
+      <canvas id="chartSerie"></canvas>
+    </div>
+  </div>
+
+  <!-- SECTION 2: GEOGRAFIA E COORDENAÇÃO -->
+  <div class="section-title"><span class="num">02</span><h2>Distribuição geográfica e por coordenação</h2><div class="rule"></div></div>
+  <div class="grid-2">
+    <div class="panel">
+      <h3>Valor liberado por UF de produção <span class="tag">top 15</span></h3>
+      <div class="chart-box" style="height:380px;">
+        <canvas id="chartUF"></canvas>
+      </div>
+    </div>
+    <div class="panel">
+      <h3>Participação por coordenação</h3>
+      <div class="chart-box" style="height:320px;">
+        <canvas id="chartCoord"></canvas>
+      </div>
+      <table style="margin-top:10px;">
+        <thead><tr><th>Coordenadora</th><th class="num">Contratos</th></tr></thead>
+        <tbody id="tblCoord"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- SECTION 3: OPERAÇÃO -->
+  <div class="section-title"><span class="num">03</span><h2>Perfil da operação</h2><div class="rule"></div></div>
+  <div class="grid-3">
+    <div class="panel">
+      <h3>Por tipo de proposta</h3>
+      <table>
+        <thead><tr><th>Tipo</th><th class="num">Valor (R$)</th></tr></thead>
+        <tbody id="tblTipo"></tbody>
+      </table>
+    </div>
+    <div class="panel">
+      <h3>Por canal de venda</h3>
+      <div class="chart-box" style="height:180px;">
+        <canvas id="chartCanal"></canvas>
+      </div>
+      <table style="margin-top:8px;">
+        <thead><tr><th>Canal</th><th class="num">Contratos</th></tr></thead>
+        <tbody id="tblCanal"></tbody>
+      </table>
+    </div>
+    <div class="panel">
+      <h3>Situação do pagamento</h3>
+      <div class="chart-box" style="height:180px;">
+        <canvas id="chartSit"></canvas>
+      </div>
+      <table style="margin-top:8px;">
+        <thead><tr><th>Situação</th><th class="num">Contratos</th></tr></thead>
+        <tbody id="tblSit"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- SECTION 4: RANKINGS -->
+  <div class="section-title"><span class="num">04</span><h2>Rankings — gerentes e filiais</h2><div class="rule"></div></div>
+  <div class="grid-2">
+    <div class="panel">
+      <h3>Top gerentes por valor liberado</h3>
+      <table>
+        <thead><tr><th>Gerente</th><th class="num">Valor (R$)</th><th class="num">Contratos</th></tr></thead>
+        <tbody id="tblGer"></tbody>
+      </table>
+    </div>
+    <div class="panel">
+      <h3>Top filiais / correspondentes por valor liberado</h3>
+      <table>
+        <thead><tr><th>Filial</th><th class="num">Valor (R$)</th><th class="num">Contratos</th></tr></thead>
+        <tbody id="tblFil"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <footer>
+    <span>Fonte: TBL_PRODUCAO_ACUMULADA.csv &nbsp;·&nbsp; 142.628 registros processados</span>
+    <span>Valores em Reais (R$) &nbsp;·&nbsp; Painel gerado automaticamente</span>
+  </footer>
+
+</div>
+
+<script>
+const DATA = {"kpis": {"total_valor": 482153041.94, "total_registros": 142628, "ticket_medio": 3380.49, "dt_min": "02/04/2012", "dt_max": "30/05/2012", "taxa_devolvido": 1.07, "taxa_reapresentado": 1.23, "num_ufs": 32, "num_coord": 8, "num_gerentes": 21}, "serie_diaria": [{"data": "2012-04-02", "valor": 11284067.49, "qtd": 2427}, {"data": "2012-04-03", "valor": 13579801.32, "qtd": 3708}, {"data": "2012-04-04", "valor": 16140216.21, "qtd": 4371}, {"data": "2012-04-05", "valor": 13752246.03, "qtd": 3705}, {"data": "2012-04-09", "valor": 8474806.29, "qtd": 2373}, {"data": "2012-04-10", "valor": 10828993.68, "qtd": 2862}, {"data": "2012-04-11", "valor": 10562294.64, "qtd": 2625}, {"data": "2012-04-12", "valor": 13373263.23, "qtd": 3504}, {"data": "2012-04-13", "valor": 10615471.05, "qtd": 2685}, {"data": "2012-04-16", "valor": 14777182.62, "qtd": 3384}, {"data": "2012-04-17", "valor": 13527968.13, "qtd": 3843}, {"data": "2012-04-18", "valor": 9952415.52, "qtd": 3084}, {"data": "2012-04-19", "valor": 22895434.2, "qtd": 7578}, {"data": "2012-04-20", "valor": 8476946.46, "qtd": 2874}, {"data": "2012-04-23", "valor": 5949372.54, "qtd": 2058}, {"data": "2012-04-24", "valor": 6838773.75, "qtd": 2196}, {"data": "2012-04-25", "valor": 5581454.34, "qtd": 1782}, {"data": "2012-04-26", "valor": 6750934.05, "qtd": 2088}, {"data": "2012-04-27", "valor": 16773174.15, "qtd": 5949}, {"data": "2012-04-30", "valor": 7613780.67, "qtd": 2544}, {"data": "2012-05-02", "valor": 6798869.1, "qtd": 2430}, {"data": "2012-05-03", "valor": 8680023.69, "qtd": 3381}, {"data": "2012-05-04", "valor": 10914984.0, "qtd": 3804}, {"data": "2012-05-05", "valor": 23010.0, "qtd": 78}, {"data": "2012-05-07", "valor": 10044999.18, "qtd": 3369}, {"data": "2012-05-08", "valor": 10991169.06, "qtd": 3945}, {"data": "2012-05-09", "valor": 11735698.86, "qtd": 3339}, {"data": "2012-05-10", "valor": 12319800.09, "qtd": 3096}, {"data": "2012-05-11", "valor": 12135227.22, "qtd": 3744}, {"data": "2012-05-12", "valor": 2400.0, "qtd": 9}, {"data": "2012-05-14", "valor": 9465072.78, "qtd": 1887}, {"data": "2012-05-15", "valor": 11782566.06, "qtd": 3018}, {"data": "2012-05-16", "valor": 15546213.45, "qtd": 5259}, {"data": "2012-05-17", "valor": 12380039.61, "qtd": 3846}, {"data": "2012-05-18", "valor": 13178482.59, "qtd": 3582}, {"data": "2012-05-19", "valor": 1920.0, "qtd": 6}, {"data": "2012-05-21", "valor": 13131522.99, "qtd": 3726}, {"data": "2012-05-22", "valor": 16003062.15, "qtd": 4476}, {"data": "2012-05-23", "valor": 13462872.57, "qtd": 3972}, {"data": "2012-05-24", "valor": 12860001.78, "qtd": 4173}, {"data": "2012-05-25", "valor": 16243258.53, "qtd": 4638}, {"data": "2012-05-26", "valor": 2100.0, "qtd": 6}, {"data": "2012-05-28", "valor": 15876644.82, "qtd": 4761}, {"data": "2012-05-29", "valor": 19362601.91, "qtd": 5963}, {"data": "2012-05-30", "valor": 1461905.13, "qtd": 480}], "por_uf": [{"uf": "GO", "valor": 39667739.55, "qtd": 6030}, {"uf": "AP", "valor": 34223122.35, "qtd": 5604}, {"uf": "AL", "valor": 33377776.59, "qtd": 7278}, {"uf": "RJ", "valor": 33272374.44, "qtd": 9954}, {"uf": "DF", "valor": 32489587.86, "qtd": 4818}, {"uf": "SP1", "valor": 30703092.9, "qtd": 12435}, {"uf": "PB", "valor": 29671374.48, "qtd": 13110}, {"uf": "PE", "valor": 22584345.06, "qtd": 14346}, {"uf": "RN", "valor": 22254324.81, "qtd": 5847}, {"uf": "AM", "valor": 18188281.56, "qtd": 4362}, {"uf": "RS", "valor": 17984698.08, "qtd": 5580}, {"uf": "PR", "valor": 17896880.42, "qtd": 6911}, {"uf": "MA", "valor": 16676248.26, "qtd": 2991}, {"uf": "SP3", "valor": 16367696.85, "qtd": 6357}, {"uf": "BA", "valor": 15472454.19, "qtd": 6243}], "por_coord": [{"coord": "FABIANA", "valor": 102128972.66, "qtd": 26669}, {"coord": "ANA CARLA", "valor": 91708336.38, "qtd": 20628}, {"coord": "ELENI", "valor": 89982498.54, "qtd": 39546}, {"coord": "SARA", "valor": 56806756.14, "qtd": 12882}, {"coord": "ADRIANA", "valor": 48877484.01, "qtd": 18801}, {"coord": "ELAINE", "valor": 35699347.17, "qtd": 5160}, {"coord": "VANESSA", "valor": 32579063.07, "qtd": 9201}, {"coord": "REDES", "valor": 229343.25, "qtd": 771}], "por_gerente": [{"ger": "CECILIA", "valor": 51925699.29, "qtd": 18957}, {"ger": "AMANDA BRAGA", "valor": 44102904.15, "qtd": 9162}, {"ger": "SUELLEN", "valor": 39667739.55, "qtd": 6030}, {"ger": "SOCORRO", "valor": 38110834.77, "qtd": 9093}, {"ger": "AMANDA SANTOS", "valor": 35699347.17, "qtd": 5160}, {"ger": "VANESSA", "valor": 33272374.44, "qtd": 9954}, {"ger": "MATEUS - INSS", "valor": 30703092.9, "qtd": 12435}, {"ger": "ADELIA", "valor": 22584345.06, "qtd": 14346}, {"ger": "ADRIANA", "valor": 18695921.37, "qtd": 3789}, {"ger": "SEM GERENTE AM", "valor": 18188281.56, "qtd": 4362}, {"ger": "DIRLENE", "valor": 18174391.11, "qtd": 6366}, {"ger": "LISANDRA", "valor": 17984698.08, "qtd": 5580}, {"ger": "PATRICIA ZENAIDE", "valor": 17896880.42, "qtd": 6911}, {"ger": "PRISCILA", "valor": 17594271.96, "qtd": 4614}, {"ger": "JOÃO", "valor": 15472454.19, "qtd": 6243}], "por_tipo": [{"tipo": "RENEGOCIAÇÃO", "valor": 173519221.74, "qtd": 68277}, {"tipo": "CONVENCIONAL", "valor": 161042554.17, "qtd": 44067}, {"tipo": "COMPRA DE DÍVIDA", "valor": 53842707.9, "qtd": 10467}, {"tipo": "CP DIV Queda Margem", "valor": 22742983.5, "qtd": 3432}, {"tipo": "CP DIV  C/C Dia", "valor": 22562043.62, "qtd": 3650}, {"tipo": "CP DIV Boleto Dia", "valor": 17003093.34, "qtd": 3561}, {"tipo": "Reneg c/ Marg Livre", "valor": 10250255.64, "qtd": 3291}, {"tipo": "RENE. C/ CP DÍVIDA", "valor": 9409091.37, "qtd": 1554}, {"tipo": "CP DIV C/C DIA - BB", "valor": 7777033.17, "qtd": 1263}, {"tipo": "Reneg c/ Alt Parc", "valor": 1552038.33, "qtd": 1302}, {"tipo": "Convencional com RMC", "valor": 986802.78, "qtd": 237}, {"tipo": "CP DIV de RMC", "valor": 573084.33, "qtd": 279}, {"tipo": "CP RMC OUTROS BCOS", "valor": 386108.25, "qtd": 240}, {"tipo": "EMPRÉSTIMO PESSOAL", "valor": 219240.0, "qtd": 765}, {"tipo": "CONV INSS AUMENTO", "valor": 78935.94, "qtd": 108}], "por_canal": [{"canal": "CÓDIGO DIRETO", "valor": 356971141.01, "qtd": 85253}, {"canal": "INSS - CORRESPONDENTES", "valor": 125181900.93, "qtd": 57375}], "por_situacao": [{"situacao": "Normal", "valor": 470817775.46, "qtd": 139355}, {"situacao": "Devolvido", "valor": 6282586.23, "qtd": 1524}, {"situacao": "Reapresentado", "valor": 5052680.25, "qtd": 1749}], "top_filiais": [{"filial": "APOIO REVERSAO", "valor": 89927681.46, "qtd": 26133}, {"filial": "PROVEBAN - VD", "valor": 18417325.95, "qtd": 3564}, {"filial": "MILENIUM05GO", "valor": 16372634.88, "qtd": 2025}, {"filial": "RODRIGUES & CABRAL", "valor": 13517071.08, "qtd": 3027}, {"filial": "LEVYCRED", "valor": 11985086.25, "qtd": 1761}, {"filial": "HIPER CREDITO", "valor": 10782584.31, "qtd": 1620}, {"filial": "M & C", "valor": 10343212.08, "qtd": 6171}, {"filial": "VALOR PROMOTORA", "valor": 9666114.48, "qtd": 879}, {"filial": "BEVCRED", "valor": 9386704.59, "qtd": 3183}, {"filial": "AJATO", "valor": 8788223.46, "qtd": 2040}, {"filial": "K L B", "valor": 8353545.0, "qtd": 1953}, {"filial": "MC FINANCEIRA", "valor": 8231767.47, "qtd": 1251}, {"filial": "MD PATOS", "valor": 8010113.82, "qtd": 4674}, {"filial": "MN", "valor": 7698686.13, "qtd": 3894}, {"filial": "IDEAIS SERVICOS", "valor": 7428040.29, "qtd": 1965}]};
+
+// ---------- helpers ----------
+const fmtBRL = v => v.toLocaleString('pt-BR',{style:'currency',currency:'BRL',maximumFractionDigits:0});
+const fmtBRLcompact = v => {
+  if(v>=1e9) return (v/1e9).toLocaleString('pt-BR',{maximumFractionDigits:2})+' bi';
+  if(v>=1e6) return (v/1e6).toLocaleString('pt-BR',{maximumFractionDigits:1})+' mi';
+  if(v>=1e3) return (v/1e3).toLocaleString('pt-BR',{maximumFractionDigits:0})+' mil';
+  return v.toLocaleString('pt-BR');
+};
+const fmtInt = v => v.toLocaleString('pt-BR');
+const palette = ['#B3862C','#3f6350','#2c3e52','#9c3d34','#7a8fa6','#d9b876','#6b8f7a','#5a4632'];
+
+Chart.defaults.font.family = "'IBM Plex Mono', monospace";
+Chart.defaults.font.size = 11;
+Chart.defaults.color = '#2c3e52';
+
+// ---------- header period ----------
+document.getElementById('periodo').textContent = `${DATA.kpis.dt_min} — ${DATA.kpis.dt_max}`;
+document.getElementById('serieRange').textContent = `${DATA.serie_diaria.length} dias úteis registrados`;
+
+// ---------- KPI ledger ----------
+const ledger = document.getElementById('ledger');
+const kpiCells = [
+  {label:'Valor liberado total', value:fmtBRL(DATA.kpis.total_valor), sub:'acumulado no período', cls:'gold'},
+  {label:'Contratos processados', value:fmtInt(DATA.kpis.total_registros), sub:`${DATA.kpis.num_ufs} UFs de produção`},
+  {label:'Ticket médio', value:fmtBRL(DATA.kpis.ticket_medio), sub:'por contrato'},
+  {label:'Coordenações ativas', value:DATA.kpis.num_coord, sub:`${DATA.kpis.num_gerentes} gerentes no total`},
+  {label:'Devolução / reapres.', value:`${DATA.kpis.taxa_devolvido}%`, sub:`+ ${DATA.kpis.taxa_reapresentado}% reapresentado`, cls:'red'},
+];
+kpiCells.forEach((c,i)=>{
+  const div = document.createElement('div');
+  div.className='cell';
+  div.setAttribute('data-idx', String(i+1).padStart(2,'0'));
+  div.innerHTML = `<div class="label">${c.label}</div><div class="value ${c.cls||''}">${c.value}</div><div class="sub">${c.sub}</div>`;
+  ledger.appendChild(div);
+});
+
+// ---------- chart: série diária ----------
+new Chart(document.getElementById('chartSerie'), {
+  type:'line',
+  data:{
+    labels: DATA.serie_diaria.map(d=>{
+      const [y,m,dd]=d.data.split('-'); return `${dd}/${m}`;
+    }),
+    datasets:[{
+      label:'Valor liberado',
+      data: DATA.serie_diaria.map(d=>d.valor),
+      borderColor:'#B3862C',
+      backgroundColor:'rgba(179,134,44,0.12)',
+      pointRadius:0,
+      pointHoverRadius:4,
+      borderWidth:2,
+      fill:true,
+      tension:0.25,
+    }]
+  },
+  options:{
+    responsive:true, maintainAspectRatio:false,
+    interaction:{mode:'index', intersect:false},
+    plugins:{
+      legend:{display:false},
+      tooltip:{
+        backgroundColor:'#122032', titleFont:{family:"'IBM Plex Mono',monospace"},
+        callbacks:{ label: ctx => ' '+fmtBRL(ctx.parsed.y) }
+      }
+    },
+    scales:{
+      x:{grid:{display:false}, ticks:{maxRotation:0, autoSkip:true, maxTicksLimit:16}},
+      y:{grid:{color:'#e4ddc9'}, ticks:{callback:v=>fmtBRLcompact(v)}}
+    }
+  }
+});
+
+// ---------- chart: por UF (horizontal bar) ----------
+new Chart(document.getElementById('chartUF'), {
+  type:'bar',
+  data:{
+    labels: DATA.por_uf.map(d=>d.uf),
+    datasets:[{
+      data: DATA.por_uf.map(d=>d.valor),
+      backgroundColor:'#B3862C',
+      borderRadius:2,
+      maxBarThickness:16,
+    }]
+  },
+  options:{
+    indexAxis:'y',
+    responsive:true, maintainAspectRatio:false,
+    plugins:{
+      legend:{display:false},
+      tooltip:{backgroundColor:'#122032', callbacks:{ label: ctx => ' '+fmtBRL(ctx.parsed.x) }}
+    },
+    scales:{
+      x:{grid:{color:'#e4ddc9'}, ticks:{callback:v=>fmtBRLcompact(v)}},
+      y:{grid:{display:false}}
+    }
+  }
+});
+
+// ---------- chart: por coordenação (donut) ----------
+new Chart(document.getElementById('chartCoord'), {
+  type:'doughnut',
+  data:{
+    labels: DATA.por_coord.map(d=>d.coord),
+    datasets:[{
+      data: DATA.por_coord.map(d=>d.valor),
+      backgroundColor: palette,
+      borderColor:'#FBF8F1',
+      borderWidth:2,
+    }]
+  },
+  options:{
+    responsive:true, maintainAspectRatio:false,
+    plugins:{
+      legend:{position:'bottom', labels:{boxWidth:10, padding:10, font:{size:10}}},
+      tooltip:{backgroundColor:'#122032', callbacks:{ label: ctx => ' '+ctx.label+': '+fmtBRL(ctx.parsed) }}
+    }
+  }
+});
+
+// ---------- chart: canal (bar) ----------
+new Chart(document.getElementById('chartCanal'), {
+  type:'bar',
+  data:{
+    labels: DATA.por_canal.map(d=>d.canal),
+    datasets:[{
+      data: DATA.por_canal.map(d=>d.valor),
+      backgroundColor:['#3f6350','#2c3e52'],
+      borderRadius:2,
+      maxBarThickness:40,
+    }]
+  },
+  options:{
+    indexAxis:'y',
+    responsive:true, maintainAspectRatio:false,
+    plugins:{legend:{display:false}, tooltip:{backgroundColor:'#122032', callbacks:{ label: ctx => ' '+fmtBRL(ctx.parsed.x) }}},
+    scales:{ x:{grid:{color:'#e4ddc9'}, ticks:{callback:v=>fmtBRLcompact(v)}}, y:{grid:{display:false}} }
+  }
+});
+
+// ---------- chart: situação pgto (bar) ----------
+new Chart(document.getElementById('chartSit'), {
+  type:'bar',
+  data:{
+    labels: DATA.por_situacao.map(d=>d.situacao),
+    datasets:[{
+      data: DATA.por_situacao.map(d=>d.valor),
+      backgroundColor:['#3f6350','#9c3d34','#B3862C'],
+      borderRadius:2,
+      maxBarThickness:40,
+    }]
+  },
+  options:{
+    indexAxis:'y',
+    responsive:true, maintainAspectRatio:false,
+    plugins:{legend:{display:false}, tooltip:{backgroundColor:'#122032', callbacks:{ label: ctx => ' '+fmtBRL(ctx.parsed.x) }}},
+    scales:{ x:{grid:{color:'#e4ddc9'}, ticks:{callback:v=>fmtBRLcompact(v)}}, y:{grid:{display:false}} }
+  }
+});
+
+// ---------- tables ----------
+function fillTable(id, rows, cols){
+  const tbody = document.getElementById(id);
+  tbody.innerHTML = rows.map(r=>{
+    return '<tr>' + cols.map(c=>c(r)).join('') + '</tr>';
+  }).join('');
+}
+
+fillTable('tblCoord', DATA.por_coord, [
+  r=>`<td>${r.coord}</td>`,
+  r=>`<td class="num">${fmtInt(r.qtd)}</td>`
+]);
+
+const maxTipo = Math.max(...DATA.por_tipo.map(d=>d.valor));
+fillTable('tblTipo', DATA.por_tipo, [
+  r=>`<td>${r.tipo}</td>`,
+  r=>`<td class="num">${fmtBRL(r.valor)}</td>`
+]);
+
+fillTable('tblCanal', DATA.por_canal, [
+  r=>`<td>${r.canal}</td>`,
+  r=>`<td class="num">${fmtInt(r.qtd)}</td>`
+]);
+
+fillTable('tblSit', DATA.por_situacao, [
+  r=>`<td>${r.situacao}</td>`,
+  r=>`<td class="num">${fmtInt(r.qtd)}</td>`
+]);
+
+fillTable('tblGer', DATA.por_gerente, [
+  r=>`<td>${r.ger}</td>`,
+  r=>`<td class="num">${fmtBRL(r.valor)}</td>`,
+  r=>`<td class="num">${fmtInt(r.qtd)}</td>`
+]);
+
+fillTable('tblFil', DATA.top_filiais, [
+  r=>`<td>${r.filial}</td>`,
+  r=>`<td class="num">${fmtBRL(r.valor)}</td>`,
+  r=>`<td class="num">${fmtInt(r.qtd)}</td>`
+]);
+</script>
+</body>
+</html>
