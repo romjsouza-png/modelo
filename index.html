@@ -240,6 +240,69 @@
   .grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;}
   @media(max-width:900px){.grid-2,.grid-3{grid-template-columns:1fr;} .ledger{grid-template-columns:repeat(2,1fr);}}
 
+  /* ==================== MOBILE ==================== */
+  @media(max-width:640px){
+    .wrap{padding:18px 14px 60px;}
+
+    header{flex-direction:column;align-items:flex-start;gap:10px;padding-bottom:16px;}
+    .period-box{text-align:left;border-left:none;border-top:1px solid var(--border);padding-left:0;padding-top:10px;width:100%;}
+    h1{font-size:26px;}
+    .subline{font-size:12.5px;margin:10px 0 20px;}
+
+    /* tabs: scroll horizontally instead of wrapping */
+    .tabs{overflow-x:auto;-webkit-overflow-scrolling:touch;flex-wrap:nowrap;padding-bottom:2px;}
+    .tabs::-webkit-scrollbar{display:none;}
+    .tab-btn{white-space:nowrap;margin-right:16px;font-size:12.5px;flex-shrink:0;}
+
+    /* filter bars stack fully, inputs full width for easy tapping */
+    .filterbar{flex-direction:column;align-items:stretch;gap:16px;padding:16px;}
+    .filterbar .fgroup{width:100%;}
+    .filterbar input[type=date], select.sel{width:100%;min-width:0;}
+    .divider-v{display:none;}
+    #compareRange, #compareRangeF{flex-direction:column;align-items:stretch;width:100%;}
+    #compareRange.show{display:flex;}
+    .presets{width:100%;}
+    .presets .btn{flex:1 1 auto;text-align:center;}
+
+    /* KPI ledger: single column, roomier */
+    .ledger{grid-template-columns:1fr 1fr;gap:10px;}
+    .ledger .cell{padding:14px 14px 12px;}
+    .cell .value{font-size:20px;}
+    .cell .label{font-size:9.5px;}
+
+    .section-title{margin:34px 0 14px;gap:10px;}
+    .section-title h2{font-size:16.5px;}
+
+    .panel{padding:16px 14px 12px;}
+    .panel h3{font-size:10px;flex-wrap:wrap;gap:4px;}
+
+    /* charts: shorter on phones (target the sized container, not the canvas) */
+    .chart-box:has(#chartSerie), .chart-box:has(#chartSerieG){height:220px !important;}
+    .chart-box:has(#chartUF){height:320px !important;}
+    .chart-box:has(#chartCoord){height:240px !important;}
+    .chart-box:has(#chartCanal), .chart-box:has(#chartSit){height:140px !important;}
+    .chart-box:has(#chartRankG){height:340px !important;}
+
+    /* tables: panel scrolls horizontally instead of squeezing columns */
+    .panel{overflow-x:auto;}
+    table{font-size:11.5px; min-width:460px;}
+    thead th, tbody td{padding:6px 6px;}
+
+    /* funnel: stack meta below track on very narrow screens */
+    .funnel-row{flex-wrap:wrap;gap:8px;}
+    .funnel-track{min-width:100%;order:2;height:26px;}
+    .funnel-meta{order:1;min-width:0;max-width:none;width:100%;}
+    .funnel-rank{order:0;}
+
+    .grid-2, .grid-3{gap:14px;}
+
+    footer{flex-direction:column;gap:6px;font-size:9.5px;}
+  }
+
+  @media(max-width:400px){
+    .ledger{grid-template-columns:1fr;}
+  }
+
   .panel{
     background:linear-gradient(160deg, var(--surface), var(--surface-2));
     border:1px solid var(--border);
